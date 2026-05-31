@@ -8,6 +8,17 @@ from app.core.rbac import get_allowed_departments
 from app.services import embedding_service, llm_service, reranking_service, vector_store_service
 from app.utils.timers import log_timer
 
+CAPABILITY_RESPONSE = (
+    "Doküman bazlı sorularınızı yanıtlayabilir, yüklenen PDF/Excel dosyalarından "
+    "ilgili bilgileri bulup kaynak sayfa veya satır referanslarıyla açıklayabilirim."
+)
+
+
+def _is_capability_question(question: str) -> bool:
+    """Return True when the user asks about assistant capabilities."""
+    normalized_question = " ".join(question.casefold().split())
+    return "neler yapabilirsin" in normalized_question
+
 
 def query_documents(question: str, user_role: str) -> dict:
     """Execute a RAG query against ingested documents.
@@ -26,6 +37,13 @@ def query_documents(question: str, user_role: str) -> dict:
         # 1. RBAC: determine allowed departments
         departments = get_allowed_departments(user_role)
         logger.info("User role '%s' -> departments: %s", user_role, departments)
+
+        if _is_capability_question(question):
+            logger.info("Capability question detected")
+            return {
+                "answer": CAPABILITY_RESPONSE,
+                "sources": [],
+            }
 
         # 2. Embed the question
         query_embedding = embedding_service.get_single_embedding(question)

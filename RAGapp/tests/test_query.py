@@ -26,6 +26,18 @@ def test_query_rejects_missing_fields(client):
     assert response.status_code == 422
 
 
+def test_query_handles_capability_question(client):
+    """Capability question should be answered without source chunks."""
+    response = client.post(
+        "/api/query",
+        json={"question": "neler yapabilirsin", "user_role": "engineer"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["sources"] == []
+    assert "doküman" in data["answer"].lower()
+
+
 def test_documents_endpoint_returns_list(client):
     """Documents endpoint should return a list (possibly empty)."""
     response = client.get("/api/documents")
