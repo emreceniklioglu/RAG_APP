@@ -1,5 +1,7 @@
 """Tests for the query endpoint."""
 
+from app.services.query_service import CAPABILITY_RESPONSE
+
 
 def test_query_rejects_invalid_role(client):
     """Querying with an invalid role should return 400."""
@@ -30,12 +32,12 @@ def test_query_handles_capability_question(client):
     """Capability question should be answered without source chunks."""
     response = client.post(
         "/api/query",
-        json={"question": "neler yapabilirsin", "user_role": "engineer"},
+        json={"question": "Neler yapabilirsin?", "user_role": "engineer"},
     )
     assert response.status_code == 200
     data = response.json()
     assert data["sources"] == []
-    assert "doküman" in data["answer"].lower()
+    assert data["answer"] == CAPABILITY_RESPONSE
 
 
 def test_documents_endpoint_returns_list(client):

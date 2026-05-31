@@ -3,6 +3,8 @@
 Handles: RBAC check -> embed question -> vector search -> re-rank (B2) -> LLM generation.
 """
 
+import string
+
 from app.core.logging import logger
 from app.core.rbac import get_allowed_departments
 from app.services import embedding_service, llm_service, reranking_service, vector_store_service
@@ -12,12 +14,19 @@ CAPABILITY_RESPONSE = (
     "Doküman bazlı sorularınızı yanıtlayabilir, yüklenen PDF/Excel dosyalarından "
     "ilgili bilgileri bulup kaynak sayfa veya satır referanslarıyla açıklayabilirim."
 )
+CAPABILITY_QUESTION_PATTERNS = (
+    "neler yapabilirsin",
+    "ne yapabilirsin",
+    "neler yaparsın",
+    "ne yaparsın",
+)
+PUNCTUATION_TABLE = str.maketrans("", "", string.punctuation)
 
 
 def _is_capability_question(question: str) -> bool:
     """Return True when the user asks about assistant capabilities."""
-    normalized_question = " ".join(question.casefold().split())
-    return "neler yapabilirsin" in normalized_question
+    cleaned_question = " ".join(question.translate(PUNCTUATION_TABLE).casefold().split())
+    return cleaned_question in CAPABILITY_QUESTION_PATTERNS
 
 
 def query_documents(question: str, user_role: str) -> dict:
